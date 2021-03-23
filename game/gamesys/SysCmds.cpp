@@ -449,6 +449,27 @@ void GiveStuffToPlayer( idPlayer* player, const char* name, const char* value )
 		}
 	}
 
+	if (give_all || idStr::Icmp(name, "exp") == 0)	{
+		player->inventory.exp = player->inventory.maxexp;
+		if (!give_all) {
+			return;
+		}
+	}
+
+	if (give_all || idStr::Icmp(name, "gold") == 0)	{
+		player->inventory.gold = player->inventory.gold + 5;
+		if (!give_all) {
+			return;
+		}
+	}
+
+	if (give_all || idStr::Icmp(name, "silver") == 0)	{
+		player->inventory.silver = player->inventory.silver + 5;
+		if (!give_all) {
+			return;
+		}
+	}
+
 	if ( give_all || idStr::Icmp( name, "weapons" ) == 0 ) {
 		player->inventory.weapons = BIT( MAX_WEAPONS ) - 1;
 		player->CacheWeapons();

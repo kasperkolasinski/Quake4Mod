@@ -405,6 +405,24 @@ void idInventory::Save( idSaveGame *savefile ) const {
 	savefile->WriteInt( armor );
 	savefile->WriteInt( maxarmor );
 
+	//Mod Saves
+	savefile->WriteInt( exp );
+	savefile->WriteInt( maxexp );
+	savefile->WriteInt( skillpts );
+	savefile->WriteInt( level );
+	savefile->WriteFloat( damageRes );
+	savefile->WriteFloat( agiPer );
+	savefile->WriteInt( healthLevel );
+	savefile->WriteInt( defenseLevel );
+	savefile->WriteInt( agiLevel );
+	savefile->WriteInt( gold );
+	savefile->WriteInt( silver );
+	savefile->WriteInt( nodam );
+	savefile->WriteInt( second );
+	savefile->WriteInt( killheal );
+	savefile->WriteInt( doubledam );
+	savefile->WriteInt( trispeed );
+
 	for( i = 0; i < MAX_AMMO; i++ ) {
 		savefile->WriteInt( ammo[ i ] );
 	}
@@ -484,6 +502,24 @@ void idInventory::Restore( idRestoreGame *savefile ) {
 	savefile->ReadInt( powerups );
 	savefile->ReadInt( armor );
 	savefile->ReadInt( maxarmor );
+
+	//Mod Restores
+	savefile->ReadInt( exp );
+	savefile->ReadInt( maxexp );
+	savefile->ReadInt( skillpts );
+	savefile->ReadInt( level );
+	savefile->ReadFloat( damageRes );
+	savefile->ReadFloat( agiPer );
+	savefile->ReadInt( healthLevel );
+	savefile->ReadInt( defenseLevel );
+	savefile->ReadInt( agiLevel );
+	savefile->ReadInt( gold );
+	savefile->ReadInt( silver );
+	savefile->ReadInt( nodam );
+	savefile->ReadInt( second );
+	savefile->ReadInt( killheal );
+	savefile->ReadInt( doubledam );
+	savefile->ReadInt( trispeed );
 
 	for( i = 0; i < MAX_AMMO; i++ ) {
 		savefile->ReadInt( ammo[ i ] );
@@ -1342,6 +1378,34 @@ idPlayer::idPlayer() {
 	teamAmmoRegenPending	= false;
 	teamDoubler			= NULL;		
 	teamDoublerPending		= false;
+
+	//Mod Initialization
+	inventory.exp = 0;
+	inventory.maxexp = 100;
+	inventory.skillpts = 0;
+	inventory.level = 0;
+	inventory.damageRes = 1.00f;
+	inventory.agiPer = 1.00f;
+	inventory.healthLevel = 0;
+	inventory.defenseLevel = 0;
+	inventory.agiLevel = 0;
+	inventory.gold = 0;
+	inventory.silver = 0;
+	inventory.nodam = 0;
+	nodamflag = false;
+	nodamtimer = 0.0;
+	inventory.second = 0;
+	secondflag = false;
+	inventory.killheal = 0;
+	killhealflag = false;
+	killhealtimer = 0.0;
+	inventory.doubledam = 0;
+	doubledamflag = false;
+	doubledamtimer = 0.0;
+	inventory.trispeed = 0;
+	trispeedflag = false;
+	trispeedtimer = 0.0;
+	unlockflag = false;
 }
 
 /*
@@ -3406,6 +3470,24 @@ void idPlayer::UpdateHudStats( idUserInterface *_hud ) {
 		_hud->SetStateInt ( "player_armor", inventory.armor );
 		_hud->SetStateFloat	( "player_armorpct", idMath::ClampFloat ( 0.0f, 1.0f, (float)inventory.armor / (float)inventory.maxarmor ) );
 		_hud->HandleNamedEvent ( "updateArmor" );
+	}
+
+	//Set up XP system
+	float exppercent = idMath::ClampFloat(0.0f, 1.0f, (float)inventory.exp / (float)inventory.maxexp);
+	if (exppercent == 1.0)
+	{
+		inventory.skillpts = inventory.skillpts + 2;
+		inventory.level++;
+		exppercent = 0.0;
+		inventory.exp = 0;
+	}
+
+	temp = _hud->State().GetInt("player_exp", "-1");
+	if (temp != inventory.exp) {
+		_hud->SetStateInt("player_expDelta", temp == -1 ? 0 : (temp - inventory.exp));
+		_hud->SetStateInt("player_exp", inventory.exp);
+		_hud->SetStateFloat("player_exppct", exppercent);
+		_hud->HandleNamedEvent("updateExp");
 	}
 	
 	// Boss bar
@@ -7210,6 +7292,7 @@ void idPlayer::UpdateFocus( void ) {
 
 				ui->SetStateString( "player_health", va("%i", health ) );
 				ui->SetStateString( "player_armor", va( "%i%%", inventory.armor ) );
+				ui->SetStateString( "player_exp", va( "%i%%", inventory.exp ));
 
 				kv = ent->spawnArgs.MatchPrefix( "gui_", NULL );
 				while ( kv ) {
@@ -8567,6 +8650,424 @@ void idPlayer::PerformImpulse( int impulse ) {
 			idFuncRadioChatter::RepeatLast();
 			break;
 		}
+		
+		//Shows Inventory (I)
+		case IMPULSE_41: {
+			gameLocal.Printf("\nSTATS AND INVENTORY\n");
+			gameLocal.Printf("Player XP: %d \n", inventory.exp);
+			gameLocal.Printf("Player Skill Pts: %d \n", inventory.skillpts);
+			gameLocal.Printf("Player Level: %d \n", inventory.level);
+			gameLocal.Printf("-----------------------------\n");
+			gameLocal.Printf("STATS:\n");
+			gameLocal.Printf("Vitality (U): %d \n", inventory.healthLevel);
+			gameLocal.Printf("Defense  (O): %d \n", inventory.defenseLevel);
+			gameLocal.Printf("Agility  (P): %d \n", inventory.agiLevel);
+			gameLocal.Printf("-----------------------------\n");
+			gameLocal.Printf("INVENTORY:\n\n");
+			gameLocal.Printf("Gold: %d \n", inventory.gold);
+			gameLocal.Printf("Silver: %d \n\n", inventory.silver);
+			gameLocal.Printf("Consumables:\n");
+			gameLocal.Printf("Second Chance (1G, 1S): %d \n", inventory.second);
+			gameLocal.Printf("Killheal (1G, 2S): %d \n", inventory.killheal);
+			gameLocal.Printf("Triple Speed (2G, 1S): %d \n", inventory.trispeed);
+			gameLocal.Printf("Double Damage (2G, 2S): %d \n", inventory.doubledam);
+			gameLocal.Printf("No Damage (2G, 3S): %d \n", inventory.nodam);
+			gameLocal.Printf("-----------------------------\n");
+
+			break;
+		}
+
+		//Upgrades Health (U)
+		case IMPULSE_42: {
+			if (unlockflag)
+			{
+				if (inventory.skillpts > 0)
+				{
+					gameLocal.Printf("Increasing Vitality\n");
+					inventory.healthLevel++;
+					inventory.maxHealth++;
+					inventory.skillpts--;
+				}
+
+				else
+				{
+					gameLocal.Printf("No skill points to use\n");
+				}
+			}
+
+			else
+			{
+				gameLocal.Printf("Locked.\n");
+			}
+
+			break;
+		}
+
+		//Increases Defense (O)
+		case IMPULSE_43: {
+			if (unlockflag)
+			{
+				if (inventory.skillpts > 0)
+				{
+					gameLocal.Printf("Increasing Defense\n");
+					inventory.defenseLevel++;
+					inventory.damageRes -= 0.01f;
+					inventory.skillpts--;
+				}
+
+				else
+				{
+					gameLocal.Printf("No skill points to use\n");
+				}
+			}
+
+			else
+			{
+				gameLocal.Printf("Locked.\n");
+			}
+
+			break;
+		}
+
+		//Increase Agility (P)
+		case IMPULSE_44: {
+			if (unlockflag)
+			{
+				if (inventory.skillpts > 0)
+				{
+					gameLocal.Printf("Increasing Agility\n");
+					inventory.agiLevel++;
+					inventory.agiPer += 0.01f;
+					inventory.skillpts--;
+				}
+
+				else
+				{
+					gameLocal.Printf("No skill points to use\n");
+				}
+			}
+
+			else
+			{
+				gameLocal.Printf("Locked.\n");
+			}
+
+			break;
+		}
+
+		
+		//Unlock/Lock Crafting and Usage of Consumables as well as Upgrading Stats (F10)
+		case IMPULSE_45: {
+			if(unlockflag)
+			{
+				unlockflag = false;
+				gameLocal.Printf("\nLOCKED CRAFTING, USAGE, AND UPGRADES\n");
+			}
+
+			else
+			{
+				unlockflag = true;
+				gameLocal.Printf("\nUNLOCKED CRAFTING, USAGE, AND UPGRADES\n");
+				gameLocal.Printf("-----------------------------\n");
+				gameLocal.Printf("Second Chance (Craft: (G), Use: (H)), Killheal (Craft: (J), Use: (K)), Triple Speed (Craft: (L), Use: (X)), Double Damage (Craft: (V), Use: (B)), No Damage (Craft: (N), Use: (M))\n");
+				gameLocal.Printf("-----------------------------\n");
+			}
+
+			break;
+		}
+
+		//Craft Second Chance Consumable (G)
+		case IMPULSE_46: {
+			if (unlockflag)
+			{
+				if (inventory.gold >= 1 && inventory.silver >= 1)
+				{
+					gameLocal.Printf("Crafting Second Chance Consumable\n");
+					inventory.gold--;
+					inventory.silver--;
+					inventory.second++;
+				}
+
+				else
+				{
+					gameLocal.Printf("Not enough materials. Can't craft consumable.\n");
+				}
+			}
+
+			else
+			{
+				gameLocal.Printf("Locked.\n");
+			}
+
+			break;
+		}
+
+		//Use Second Chance Consumable (H)
+		case IMPULSE_47: {
+			if (unlockflag)
+			{
+				if (inventory.second > 0 && !secondflag)
+				{
+					gameLocal.Printf("Using Second Chance Consumable. If you die, you will regain 50 health and live.\n");
+					inventory.second--;
+					secondflag = true;
+				}
+
+				else if(secondflag)
+				{
+					gameLocal.Printf("Already using consumable.\n");
+				}
+
+				else
+				{
+					gameLocal.Printf("You don't have this consumable.\n");
+				}
+			}
+
+			else
+			{
+				gameLocal.Printf("Locked.\n");
+			}
+
+			break;
+		}
+
+		//Craft Killheal Consumable (J)
+		case IMPULSE_48: {
+			if (unlockflag)
+			{
+				if (inventory.gold >= 1 && inventory.silver >= 2)
+				{
+					gameLocal.Printf("Crafting Killheal Consumable\n");
+					inventory.gold--;
+					inventory.silver -= 2;
+					inventory.killheal++;
+				}
+
+				else
+				{
+					gameLocal.Printf("Not enough materials. Can't craft consumable.\n");
+				}
+			}
+
+			else
+			{
+				gameLocal.Printf("Locked.\n");
+			}
+
+			break;
+		}
+
+		//Use Killheal Consumable (K)
+		case IMPULSE_49: {
+							 
+			if (unlockflag)
+			{
+				if (inventory.killheal > 0 && !killhealflag)
+				{
+					gameLocal.Printf("Using Killheal Consumable. Each kill grants 10 health. Lasts 1 min.\n");
+					inventory.killheal--;
+					killhealflag = true;
+					killhealtimer = gameLocal.time;
+				}
+
+				else if(killhealflag && gameLocal.time <= (killhealtimer + 60000))
+				{
+					gameLocal.Printf("Already using consumable.\n");
+				}
+
+				else
+				{
+					gameLocal.Printf("You don't have this consumable.\n");
+					killhealflag = false;
+				}
+			}
+
+			else
+			{
+				gameLocal.Printf("Locked.\n");
+			}
+			
+
+			break;
+		}
+
+		//Craft Triple Speed Consumable (L)
+		case IMPULSE_53: {
+			if (unlockflag)
+			{
+				if (inventory.gold >= 2 && inventory.silver >= 1)
+				{
+					gameLocal.Printf("Crafting Triple Speed Consumable\n");
+					inventory.gold -= 2;
+					inventory.silver--;
+					inventory.trispeed++;
+				}
+
+				else
+				{
+					gameLocal.Printf("Not enough materials. Can't craft consumable.\n");
+				}
+			}
+
+			else
+			{
+				gameLocal.Printf("Locked.\n");
+			}
+
+			break;
+		}
+
+		//Use Triple Speed Consumable (X)
+		case IMPULSE_54: {
+			if (unlockflag)
+			{
+				if (inventory.trispeed > 0 && !trispeedflag)
+				{
+					gameLocal.Printf("Using Triple Speed Consumable. You will move with triple speed for 30 seconds.\n");
+					inventory.trispeed--;
+					trispeedflag = true;
+					trispeedtimer = gameLocal.time;
+				}
+
+				else if(trispeedflag && gameLocal.time <= (trispeedtimer + 30000))
+				{
+					gameLocal.Printf("Already using consumable.\n");
+				}
+
+				else
+				{
+					gameLocal.Printf("You don't have this consumable.\n");
+					trispeedflag = false;
+				}
+			}
+
+			else
+			{
+				gameLocal.Printf("Locked.\n");
+			}
+
+			break;
+		}
+
+		//Craft Double Damage Consumable (V)
+		case IMPULSE_55: {
+			if (unlockflag)
+			{
+				if (inventory.gold >= 2 && inventory.silver >= 2)
+				{
+					gameLocal.Printf("Crafting Double Damage Consumable\n");
+					inventory.gold -= 2;
+					inventory.silver -= 2;
+					inventory.doubledam++;
+				}
+
+				else
+				{
+					gameLocal.Printf("Not enough materials. Can't craft consumable.\n");
+				}
+			}
+
+			else
+			{
+				gameLocal.Printf("Locked.\n");
+			}
+
+			break;
+		}
+
+		//Use Double Damage Consumable (B)
+		case IMPULSE_56: {
+			if (unlockflag)
+			{
+				if (inventory.doubledam > 0 && !doubledamflag)
+				{
+					gameLocal.Printf("Using Double Damage Consumable. You will deal double damage for 1 min.\n");
+					inventory.doubledam--;
+					doubledamflag = true;
+					doubledamtimer = gameLocal.time;
+				}
+
+				else if(doubledamflag && gameLocal.time <= (doubledamtimer + 60000))
+				{
+					gameLocal.Printf("Already using consumable.\n");
+				}
+
+				else
+				{
+					gameLocal.Printf("You don't have this consumable.\n");
+					doubledamflag = false;
+				}
+			}
+
+			else
+			{
+				gameLocal.Printf("Locked.\n");
+			}
+
+			break;
+		}
+
+		//Craft No Damage Consumable (N)
+		case IMPULSE_57: {
+			if (unlockflag)
+			{
+				if (inventory.gold >= 2 && inventory.silver >= 3)
+				{
+					gameLocal.Printf("Crafting No Damage Consumable\n");
+					inventory.gold -= 2;
+					inventory.silver -= 3;
+					inventory.nodam++;
+				}
+
+				else
+				{
+					gameLocal.Printf("Not enough materials. Can't craft consumable.\n");
+				}
+			}
+
+			else
+			{
+				gameLocal.Printf("Locked.\n");
+			}
+
+			break;
+		}
+
+		//Use No Damage Consumable (M)
+		case IMPULSE_58: {
+							 
+			if (unlockflag)
+			{
+				if (inventory.nodam > 0 && !nodamflag)
+				{
+					gameLocal.Printf("Using No Damage Consumable. You will not take damage for 30 seconds.\n");
+					inventory.nodam--;
+					nodamflag = true;
+					nodamtimer = gameLocal.time;
+				}
+
+				else if(nodamflag && gameLocal.time <= (nodamtimer + 30000))
+				{
+					gameLocal.Printf("Already using consumable.\n");
+				}
+
+				else
+				{
+					gameLocal.Printf("You don't have this consumable.\n");
+					nodamflag = false;
+				}
+			}
+
+			else
+			{
+				gameLocal.Printf("Locked.\n");
+			}
+			
+
+			break;
+		}
+
 
 // RITUAL BEGIN
 // squirrel: Mode-agnostic buymenus
@@ -8756,6 +9257,19 @@ void idPlayer::AdjustSpeed( void ) {
 
 	if ( influenceActive == INFLUENCE_LEVEL3 ) {
 		speed *= 0.33f;
+	}
+
+	//Speed is increased when Agility is upgraded
+	speed *= inventory.agiPer;
+
+	if (trispeedflag && gameLocal.time <= (trispeedtimer + 30000))
+	{
+		speed *= 3;
+	}
+
+	else
+	{
+		trispeedflag = false;
 	}
 
 	physicsObj.SetSpeed( speed, pm_crouchspeed.GetFloat() );
@@ -10067,6 +10581,17 @@ void idPlayer::Damage( idEntity *inflictor, idEntity *attacker, const idVec3 &di
  	idVec3		damage_from;
  	float		attackerPushScale;
 
+	//No Damage Consumable
+	if (nodamflag && gameLocal.time <= (nodamtimer + 30000))
+	{
+		return;
+	}
+
+	else
+	{
+		nodamflag = false;
+	}
+
 	// RAVEN BEGIN
 	// twhitaker: difficulty levels
 	float modifiedDamageScale = damageScale;
@@ -10262,8 +10787,21 @@ void idPlayer::Damage( idEntity *inflictor, idEntity *attacker, const idVec3 &di
 			damage = 1;
 		}
 
+		//Damage is reduced when Defense is upgraded
+		damage *= inventory.damageRes;
+
+		if (damage <= 0)
+			return;
+
 		int oldHealth = health;
 		health -= damage;
+
+		//Handle Second Chance Consumable
+		if (secondflag && health <= 0)
+		{
+			health = 50;
+			secondflag = false;
+		}
 
 		GAMELOG_ADD ( va("player%d_damage_taken", entityNumber ), damage );
 		GAMELOG_ADD ( va("player%d_damage_%s", entityNumber, damageDefName), damage );

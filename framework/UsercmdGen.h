@@ -71,6 +71,21 @@ const int IMPULSE_27			= 27;			// <unused>
 const int IMPULSE_28			= 28;			// vote yes
 const int IMPULSE_29			= 29;			// vote no
 const int IMPULSE_40			= 40;			// repeast last radio chatter
+const int IMPULSE_41            = 41;			// open inventory
+const int IMPULSE_42			= 42;			// upgrade vitality
+const int IMPULSE_43			= 43;			// upgrade defense
+const int IMPULSE_44			= 44;			// upgrade agility
+const int IMPULSE_45			= 45;			// unlock/lock
+const int IMPULSE_46			= 46;			// craft second chance
+const int IMPULSE_47			= 47;			// use second chance
+const int IMPULSE_48			= 48;			// craft killheal
+const int IMPULSE_49			= 49;			// use killheal
+const int IMPULSE_53			= 53;			// craft triple speed
+const int IMPULSE_54			= 54;			// use triple speed
+const int IMPULSE_55			= 55;			// craft double damage
+const int IMPULSE_56			= 56;			// use double damage
+const int IMPULSE_57			= 57;			// craft no damage
+const int IMPULSE_58			= 58;			// use no damage
 
 // RAVEN BEGIN
 // bdube: added flashlight

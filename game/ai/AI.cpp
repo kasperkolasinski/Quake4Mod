@@ -1753,6 +1753,37 @@ void idAI::Killed( idEntity *inflictor, idEntity *attacker, int damage, const id
 		}
 		kv = spawnArgs.MatchPrefix( "def_drops", kv );
 	}
+
+	idPlayer *player;
+	player = gameLocal.GetLocalPlayer();
+	const idActor *actor = static_cast<const idActor *>(attacker);
+	if (actor->IsType(idPlayer::GetClassType()))
+	{
+		//XP System
+		gameLocal.Printf("KILLED MONSTER --- GAINED 10 XP\n");
+		player->inventory.exp = player->inventory.exp + 10;
+
+		//Killheal Consumable
+		if (player->killhealflag && gameLocal.time <= (player->killhealtimer + 60000))
+		{
+			player->health += 10;
+		}
+		else
+		{
+			player->killhealflag = false;
+		}
+
+		//Gold and Silver "Drops"
+		int rand = gameLocal.random.RandomInt(10);
+		if (rand < 5)
+		{
+			player->inventory.silver++;
+		}
+		else
+		{
+			player->inventory.gold++;
+		}
+	}
 }
 
 /***********************************************************************

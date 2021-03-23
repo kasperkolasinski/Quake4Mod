@@ -2486,6 +2486,24 @@ void idActor::Damage( idEntity *inflictor, idEntity *attacker, const idVec3 &dir
 
 	if ( damage > 0 ) {
 		int oldHealth = health;
+
+		idPlayer *player;
+		player = gameLocal.GetLocalPlayer();
+		const idActor *actor = static_cast<const idActor *>(attacker);
+		if (actor->IsType(idPlayer::GetClassType()))
+		{
+			
+			if (player->doubledamflag && gameLocal.time <= (player->doubledamtimer + 60000))
+			{
+				damage *= 2;
+			}
+			else
+			{
+				player->doubledamflag = false;
+			}
+			
+		}
+
 		AdjustHealthByDamage ( damage );
 		if ( health <= 0 ) {
 

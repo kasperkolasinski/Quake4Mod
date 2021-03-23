@@ -196,6 +196,25 @@ class idInventory {
 public:
 	int						maxHealth;
 	int						weapons;
+
+	//Mod Inventory
+	int						exp;
+	int						maxexp;
+	int						skillpts;
+	int						level;
+	float					damageRes;
+	float					agiPer;
+	int						healthLevel;
+	int						defenseLevel;
+	int						agiLevel;
+	int						gold;
+	int						silver;
+	int						nodam;
+	int						second;
+	int						killheal;
+	int						doubledam;
+	int						trispeed;
+
 // RITUAL BEGIN
 // squirrel: Mode-agnostic buymenus
 	int						carryOverWeapons;
@@ -424,6 +443,19 @@ public:
 // squirrel: Mode-agnostic buymenus
 	float					buyMenuCash;
 // RITUAL END
+
+	//Mod variables
+	bool					nodamflag;
+	float					nodamtimer;
+	bool					secondflag;
+	bool					killhealflag;
+	float					killhealtimer;
+	bool					doubledamflag;
+	float					doubledamtimer;
+	bool					trispeedflag;
+	float					trispeedtimer;
+	bool					unlockflag;
+
 
 public:
 	CLASS_PROTOTYPE( idPlayer );
